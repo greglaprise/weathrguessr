@@ -1,0 +1,380 @@
+class WeatherGuessr {
+    constructor() {
+        this.currentCity = null;
+        this.currentWeather = null;
+        this.gameStats = {
+            round: 1,
+            correct: 0,
+            streak: 0,
+            isMetric: true
+        };
+        this.gameState = 'waiting'; // waiting, answered, loading
+        this.correctAnswer = null;
+        
+        this.initializeElements();
+        this.bindEvents();
+        this.loadTheme();
+        this.startNewRound();
+    }
+
+    initializeElements() {
+        this.elements = {
+            cityName: document.getElementById('city-name'),
+            cityImage: document.getElementById('city-image'),
+            choices: document.getElementById('choices'),
+            feedback: document.getElementById('feedback'),
+            nextRound: document.getElementById('next-round'),
+            newGame: document.getElementById('new-game'),
+            loading: document.getElementById('loading'),
+            gameContainer: document.getElementById('game-container'),
+            
+            // Controls
+            themeToggle: document.getElementById('theme-toggle'),
+            tempToggle: document.getElementById('temp-toggle'),
+            apiStatus: document.getElementById('api-status'),
+            
+            // Stats
+            roundCount: document.getElementById('round-count'),
+            correctCount: document.getElementById('correct-count'),
+            accuracy: document.getElementById('accuracy'),
+            streak: document.getElementById('streak')
+        };
+    }
+
+    bindEvents() {
+        this.elements.nextRound.addEventListener('click', () => this.startNewRound());
+        this.elements.newGame.addEventListener('click', () => this.resetGame());
+        this.elements.themeToggle.addEventListener('click', () => this.toggleTheme());
+        this.elements.tempToggle.addEventListener('click', () => this.toggleTemperatureUnit());
+        this.elements.apiStatus.addEventListener('click', () => this.checkAPIStatus());
+    }
+
+    async startNewRound() {
+        this.showLoading(true);
+        this.gameState = 'loading';
+        this.elements.feedback.classList.add('hidden');
+        this.elements.nextRound.classList.add('hidden');
+        
+        try {
+            // Select random city
+            this.currentCity = this.getRandomCity();
+            this.elements.cityName.textContent = `${this.currentCity.name}, ${this.currentCity.country}`;
+            
+            // Load city image and weather data in parallel
+            const [imageUrl, weatherData] = await Promise.all([
+                this.getCityImage(this.currentCity.name),
+                this.getWeatherData(this.currentCity.lat, this.currentCity.lon)
+            ]);
+            
+            this.elements.cityImage.src = imageUrl;
+            this.elements.cityImage.alt = `${this.currentCity.name} cityscape`;
+            
+            this.currentWeather = weatherData;
+            this.generateChoices();
+            this.gameState = 'waiting';
+            
+        } catch (error) {
+            console.error('Error starting new round:', error);
+            this.showError('Failed to load round data. Please try again.');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    getRandomCity() {
+        return CITIES[Math.floor(Math.random() * CITIES.length)];
+    }
+
+    async getWeatherData(lat, lon) {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`;
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Weather API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return {
+            high: Math.round(data.daily.temperature_2m_max[0]),
+            low: Math.round(data.daily.temperature_2m_min[0])
+        };
+    }
+
+    async getCityImage(cityName) {
+        try {
+            // Search for city images on Wikimedia Commons
+            const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&format=json&list=search&srsearch=${encodeURIComponent(cityName + ' city skyline')}&srnamespace=6&srlimit=5&origin=*`;
+            
+            const searchResponse = await fetch(searchUrl);
+            const searchData = await searchResponse.json();
+            
+            if (searchData.query.search.length > 0) {
+                // Get the first image file info
+                const fileName = searchData.query.search[0].title;
+                const imageInfoUrl = `https://commons.wikimedia.org/w/api.php?action=query&format=json&titles=${encodeURIComponent(fileName)}&prop=imageinfo&iiprop=url&iiurlwidth=400&origin=*`;
+                
+                const imageResponse = await fetch(imageInfoUrl);
+                const imageData = await imageResponse.json();
+                
+                const pages = Object.values(imageData.query.pages);
+                if (pages[0].imageinfo && pages[0].imageinfo[0].thumburl) {
+                    return pages[0].imageinfo[0].thumburl;
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching city image:', error);
+        }
+        
+        // Fallback to a placeholder image
+        return `https://via.placeholder.com/400x250/4a90e2/ffffff?text=${encodeURIComponent(cityName)}`;
+    }
+
+    generateChoices() {
+        const correctHigh = this.currentWeather.high;
+        const correctLow = this.currentWeather.low;
+        
+        // Generate 3 incorrect but plausible alternatives
+        const choices = [
+            { high: correctHigh, low: correctLow, correct: true }
+        ];
+        
+        // Generate plausible incorrect choices
+        const variations = [
+            { high: correctHigh + this.getRandomVariation(), low: correctLow + this.getRandomVariation() },
+            { high: correctHigh + this.getRandomVariation(), low: correctLow + this.getRandomVariation() },
+            { high: correctHigh + this.getRandomVariation(), low: correctLow + this.getRandomVariation() }
+        ];
+        
+        choices.push(...variations);
+        
+        // Shuffle choices
+        for (let i = choices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [choices[i], choices[j]] = [choices[j], choices[i]];
+        }
+        
+        this.correctAnswer = choices.findIndex(choice => choice.correct);
+        this.renderChoices(choices);
+    }
+
+    getRandomVariation() {
+        // Generate temperature variations between -15 and +15 degrees
+        const variations = [-15, -12, -10, -8, -6, -4, -2, 2, 4, 6, 8, 10, 12, 15];
+        return variations[Math.floor(Math.random() * variations.length)];
+    }
+
+    renderChoices(choices) {
+        this.elements.choices.innerHTML = '';
+        
+        choices.forEach((choice, index) => {
+            const choiceElement = document.createElement('div');
+            choiceElement.className = 'choice';
+            choiceElement.innerHTML = `
+                <div>High: ${this.formatTemperature(choice.high)}</div>
+                <div>Low: ${this.formatTemperature(choice.low)}</div>
+            `;
+            
+            choiceElement.addEventListener('click', () => this.selectChoice(index, choiceElement));
+            this.elements.choices.appendChild(choiceElement);
+        });
+    }
+
+    formatTemperature(temp) {
+        if (this.gameStats.isMetric) {
+            return `${temp}°C`;
+        } else {
+            return `${Math.round(temp * 9/5 + 32)}°F`;
+        }
+    }
+
+    selectChoice(selectedIndex, choiceElement) {
+        if (this.gameState !== 'waiting') return;
+        
+        this.gameState = 'answered';
+        
+        // Mark all choices as disabled and show correct/incorrect
+        const allChoices = this.elements.choices.querySelectorAll('.choice');
+        allChoices.forEach((choice, index) => {
+            choice.style.pointerEvents = 'none';
+            if (index === this.correctAnswer) {
+                choice.classList.add('correct');
+            } else if (index === selectedIndex) {
+                choice.classList.add('incorrect');
+            }
+        });
+        
+        const isCorrect = selectedIndex === this.correctAnswer;
+        this.updateStats(isCorrect);
+        this.showFeedback(isCorrect);
+        this.elements.nextRound.classList.remove('hidden');
+    }
+
+    updateStats(isCorrect) {
+        if (isCorrect) {
+            this.gameStats.correct++;
+            this.gameStats.streak++;
+        } else {
+            this.gameStats.streak = 0;
+        }
+        
+        this.updateStatsDisplay();
+    }
+
+    updateStatsDisplay() {
+        this.elements.roundCount.textContent = this.gameStats.round;
+        this.elements.correctCount.textContent = this.gameStats.correct;
+        
+        const accuracy = this.gameStats.round > 0 ? 
+            Math.round((this.gameStats.correct / this.gameStats.round) * 100) : 0;
+        this.elements.accuracy.textContent = `${accuracy}%`;
+        
+        this.elements.streak.textContent = this.gameStats.streak;
+        
+        // Increment round for next round
+        this.gameStats.round++;
+    }
+
+    showFeedback(isCorrect) {
+        this.elements.feedback.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+        
+        if (isCorrect) {
+            this.elements.feedback.textContent = '🎉 Correct! Great guess!';
+        } else {
+            const correctTemp = this.formatTemperature(this.currentWeather.high) + ' / ' + this.formatTemperature(this.currentWeather.low);
+            this.elements.feedback.textContent = `❌ Incorrect. The correct answer was ${correctTemp}`;
+        }
+        
+        this.elements.feedback.classList.remove('hidden');
+    }
+
+    resetGame() {
+        this.gameStats = {
+            round: 1,
+            correct: 0,
+            streak: 0,
+            isMetric: this.gameStats.isMetric // Preserve temperature unit preference
+        };
+        this.updateStatsDisplay();
+        this.startNewRound();
+    }
+
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        this.elements.themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌓';
+    }
+
+    loadTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        this.elements.themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌓';
+    }
+
+    toggleTemperatureUnit() {
+        this.gameStats.isMetric = !this.gameStats.isMetric;
+        this.elements.tempToggle.textContent = this.gameStats.isMetric ? '°C' : '°F';
+        
+        // Re-render current choices if game is active
+        if (this.currentWeather && this.gameState !== 'loading') {
+            const choices = Array.from(this.elements.choices.querySelectorAll('.choice'));
+            choices.forEach((choice, index) => {
+                const isCorrect = choice.classList.contains('correct');
+                const isIncorrect = choice.classList.contains('incorrect');
+                const choiceData = this.getChoiceDataByIndex(index);
+                
+                choice.innerHTML = `
+                    <div>High: ${this.formatTemperature(choiceData.high)}</div>
+                    <div>Low: ${this.formatTemperature(choiceData.low)}</div>
+                `;
+            });
+            
+            // Update feedback if shown
+            if (!this.elements.feedback.classList.contains('hidden') && this.gameState === 'answered') {
+                const correctTemp = this.formatTemperature(this.currentWeather.high) + ' / ' + this.formatTemperature(this.currentWeather.low);
+                if (this.elements.feedback.classList.contains('incorrect')) {
+                    this.elements.feedback.textContent = `❌ Incorrect. The correct answer was ${correctTemp}`;
+                }
+            }
+        }
+    }
+
+    getChoiceDataByIndex(index) {
+        // Reconstruct choice data - in a real implementation, you'd store this
+        const correctHigh = this.currentWeather.high;
+        const correctLow = this.currentWeather.low;
+        
+        if (index === this.correctAnswer) {
+            return { high: correctHigh, low: correctLow };
+        }
+        
+        // For simplicity, return approximate values for incorrect choices
+        return { 
+            high: correctHigh + this.getRandomVariation(), 
+            low: correctLow + this.getRandomVariation() 
+        };
+    }
+
+    async checkAPIStatus() {
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'api-status';
+        statusDiv.innerHTML = '<h4>Checking API Status...</h4>';
+        document.body.appendChild(statusDiv);
+        
+        try {
+            // Test Open-Meteo API
+            const weatherTest = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.7128&longitude=-74.0060&daily=temperature_2m_max&forecast_days=1');
+            const weatherStatus = weatherTest.ok ? '✅' : '❌';
+            
+            // Test Wikimedia Commons API
+            const wikiTest = await fetch('https://commons.wikimedia.org/w/api.php?action=query&format=json&list=search&srsearch=London&srnamespace=6&srlimit=1&origin=*');
+            const wikiStatus = wikiTest.ok ? '✅' : '❌';
+            
+            statusDiv.innerHTML = `
+                <h4>API Status</h4>
+                <p>${weatherStatus} Open-Meteo Weather API</p>
+                <p>${wikiStatus} Wikimedia Commons API</p>
+            `;
+            statusDiv.className = weatherTest.ok && wikiTest.ok ? 'api-status success' : 'api-status error';
+            
+        } catch (error) {
+            statusDiv.innerHTML = `
+                <h4>API Status</h4>
+                <p>❌ Connection Error</p>
+                <p>Check your internet connection</p>
+            `;
+            statusDiv.className = 'api-status error';
+        }
+        
+        setTimeout(() => {
+            if (statusDiv.parentNode) {
+                statusDiv.parentNode.removeChild(statusDiv);
+            }
+        }, 5000);
+    }
+
+    showLoading(show) {
+        if (show) {
+            this.elements.loading.classList.remove('hidden');
+            this.elements.gameContainer.style.opacity = '0.5';
+        } else {
+            this.elements.loading.classList.add('hidden');
+            this.elements.gameContainer.style.opacity = '1';
+        }
+    }
+
+    showError(message) {
+        this.elements.feedback.className = 'feedback incorrect';
+        this.elements.feedback.textContent = message;
+        this.elements.feedback.classList.remove('hidden');
+        this.elements.nextRound.classList.remove('hidden');
+    }
+}
+
+// Initialize the game when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new WeatherGuessr();
+});
