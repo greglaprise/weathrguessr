@@ -139,11 +139,37 @@ class WeatherGuessr {
         ];
         
         // Generate plausible incorrect choices
-        const variations = [
-            { high: correctHigh + this.getRandomVariation(), low: correctLow + this.getRandomVariation() },
-            { high: correctHigh + this.getRandomVariation(), low: correctLow + this.getRandomVariation() },
-            { high: correctHigh + this.getRandomVariation(), low: correctLow + this.getRandomVariation() }
-        ];
+        const variations = [];
+        const correctSpread = correctHigh - correctLow;
+        
+        for (let i = 0; i < 3; i++) {
+            // Shift both temperatures by the same amount to maintain realistic spread
+            const tempShift = this.getRandomVariation();
+            let high = correctHigh + tempShift;
+            let low = correctLow + tempShift;
+            
+            // Add small individual variations (±3 degrees) to make spreads slightly different
+            const highVariation = Math.floor(Math.random() * 7) - 3; // -3 to +3
+            const lowVariation = Math.floor(Math.random() * 7) - 3;
+            
+            high += highVariation;
+            low += lowVariation;
+            
+            // Ensure low is never higher than high and spread isn't too extreme
+            if (low > high) {
+                [low, high] = [high, low];
+            }
+            
+            // Cap the spread at 25 degrees to keep it realistic
+            const spread = high - low;
+            if (spread > 25) {
+                const excess = spread - 25;
+                high -= Math.floor(excess / 2);
+                low += Math.ceil(excess / 2);
+            }
+            
+            variations.push({ high, low });
+        }
         
         choices.push(...variations);
         
