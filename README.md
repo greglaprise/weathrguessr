@@ -1,4 +1,4 @@
-# WeatherGuessr 🌍
+# WeathrGuessr 🌍
 
 A real-time, image-enhanced, multiple-choice game where users guess the forecasted high and low temperatures of randomly chosen major world cities.
 
