@@ -304,28 +304,8 @@ class WeatherGuessr {
         this.gameStats.isMetric = !this.gameStats.isMetric;
         this.elements.tempToggle.textContent = this.gameStats.isMetric ? '°C' : '°F';
         
-        // Re-render current choices if game is active
-        if (this.currentWeather && this.gameState !== 'loading') {
-            const choices = Array.from(this.elements.choices.querySelectorAll('.choice'));
-            choices.forEach((choice, index) => {
-                const isCorrect = choice.classList.contains('correct');
-                const isIncorrect = choice.classList.contains('incorrect');
-                const choiceData = this.getChoiceDataByIndex(index);
-                
-                choice.innerHTML = `
-                    <div>High: ${this.formatTemperature(choiceData.high)}</div>
-                    <div>Low: ${this.formatTemperature(choiceData.low)}</div>
-                `;
-            });
-            
-            // Update feedback if shown
-            if (!this.elements.feedback.classList.contains('hidden') && this.gameState === 'answered') {
-                const correctTemp = this.formatTemperature(this.currentWeather.high) + ' / ' + this.formatTemperature(this.currentWeather.low);
-                if (this.elements.feedback.classList.contains('incorrect')) {
-                    this.elements.feedback.textContent = `❌ Incorrect. The correct answer was ${correctTemp}`;
-                }
-            }
-        }
+        // Start a new game when temperature unit is toggled
+        this.resetGame();
     }
 
     getChoiceDataByIndex(index) {
