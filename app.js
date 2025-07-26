@@ -6,7 +6,7 @@ class WeatherGuessr {
             round: 1,
             correct: 0,
             streak: 0,
-            isMetric: true
+            isMetric: false
         };
         this.gameState = 'waiting'; // waiting, answered, loading
         this.correctAnswer = null;
