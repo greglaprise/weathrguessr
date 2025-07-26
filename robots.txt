@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://weathrguessr.com/sitemap.xml
+
+# Crawl-delay (optional, helps prevent overloading)
+Crawl-delay: 1

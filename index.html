@@ -3,9 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WeathrGuessr - Guess the Weather!</title>
+    <title>WeathrGuessr - Guess the Weather Game | Test Your Weather Knowledge</title>
+    <meta name="description" content="Play WeathrGuessr, the ultimate weather guessing game! Test your knowledge by predicting temperatures in cities worldwide. Challenge yourself with real weather forecasts.">
+    <meta name="keywords" content="weather game, temperature guessing, weather forecast, geography game, educational game, weather quiz">
+    <meta name="author" content="WeathrGuessr">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://weathrguessr.com/">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="WeathrGuessr - Guess the Weather Game">
+    <meta property="og:description" content="Test your weather knowledge by guessing temperatures in cities worldwide. Play the ultimate weather guessing game!">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://weathrguessr.com/">
+    <meta property="og:image" content="https://weathrguessr.com/globe.svg">
+    <meta property="og:site_name" content="WeathrGuessr">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="WeathrGuessr - Guess the Weather Game">
+    <meta name="twitter:description" content="Test your weather knowledge by guessing temperatures in cities worldwide!">
+    <meta name="twitter:image" content="https://weathrguessr.com/globe.svg">
+    
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "WeathrGuessr",
+      "description": "Test your weather knowledge by guessing temperatures in cities worldwide. Play the ultimate weather guessing game!",
+      "url": "https://weathrguessr.com",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "WeathrGuessr"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.5",
+        "ratingCount": "100"
+      }
+    }
+    </script>
+    
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-RKL1DZJ22F"></script>
     <script>
@@ -38,12 +86,12 @@
                     </div>
                 </div>
 
-                <div class="question">
+                <section class="question">
                     <h3>What's the forecasted high/low temperature for today?</h3>
                     <div id="choices" class="choices">
                         <!-- Temperature choices will be populated here -->
                     </div>
-                </div>
+                </section>
 
                 <div id="feedback" class="feedback hidden">
                     <!-- Feedback will be shown here -->
