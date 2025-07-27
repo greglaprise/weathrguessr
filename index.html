@@ -78,6 +78,41 @@
         <main>
             <div id="loading" class="loading hidden">Loading...</div>
             
+            <!-- Welcome Dialog -->
+            <div id="welcome-dialog" class="welcome-dialog hidden">
+                <div class="welcome-content">
+                    <div class="welcome-header">
+                        <h2>🌍 Welcome to WeathrGuessr!</h2>
+                        <button id="close-welcome" class="close-btn">&times;</button>
+                    </div>
+                    <div class="welcome-body">
+                        <p>Test your weather knowledge by guessing the forecasted high and low temperatures for cities around the world!</p>
+                        <div class="welcome-features">
+                            <div class="feature">
+                                <span class="feature-icon">🌡️</span>
+                                <span>Guess daily temperature ranges</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-icon">🏙️</span>
+                                <span>Explore cities worldwide</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-icon">📊</span>
+                                <span>Track your accuracy & streak</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-icon">🌓</span>
+                                <span>Dark/light mode & °C/°F toggle</span>
+                            </div>
+                        </div>
+                        <p class="welcome-tip"><strong>Tip:</strong> Consider the city's location, season, and climate when making your guess!</p>
+                    </div>
+                    <div class="welcome-footer">
+                        <button id="start-playing" class="btn btn-primary">Start Playing!</button>
+                    </div>
+                </div>
+            </div>
+            
             <div id="game-container" class="game-container">
                 <div class="city-info">
                     <h2 id="city-name">Loading city...</h2>
