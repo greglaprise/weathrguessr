@@ -15,6 +15,7 @@ class WeatherGuessr {
         this.bindEvents();
         this.loadTheme();
         this.initializeTemperatureToggle();
+        this.checkFirstVisit();
         this.startNewRound();
     }
 
@@ -28,6 +29,11 @@ class WeatherGuessr {
             newGame: document.getElementById('new-game'),
             loading: document.getElementById('loading'),
             gameContainer: document.getElementById('game-container'),
+            
+            // Welcome dialog
+            welcomeDialog: document.getElementById('welcome-dialog'),
+            closeWelcome: document.getElementById('close-welcome'),
+            startPlaying: document.getElementById('start-playing'),
             
             // Controls
             themeToggle: document.getElementById('theme-toggle'),
@@ -48,6 +54,17 @@ class WeatherGuessr {
         this.elements.themeToggle.addEventListener('click', () => this.toggleTheme());
         this.elements.tempToggle.addEventListener('click', () => this.toggleTemperatureUnit());
         this.elements.apiStatus.addEventListener('click', () => this.checkAPIStatus());
+        
+        // Welcome dialog events
+        this.elements.closeWelcome.addEventListener('click', () => this.hideWelcomeDialog());
+        this.elements.startPlaying.addEventListener('click', () => this.hideWelcomeDialog());
+        
+        // Close dialog when clicking outside content
+        this.elements.welcomeDialog.addEventListener('click', (e) => {
+            if (e.target === this.elements.welcomeDialog) {
+                this.hideWelcomeDialog();
+            }
+        });
     }
 
     async startNewRound() {
@@ -389,6 +406,22 @@ class WeatherGuessr {
         this.elements.feedback.textContent = message;
         this.elements.feedback.classList.remove('hidden');
         this.elements.nextRound.classList.remove('hidden');
+    }
+
+    checkFirstVisit() {
+        const hasVisited = localStorage.getItem('weathrguessr-visited');
+        if (!hasVisited) {
+            this.showWelcomeDialog();
+        }
+    }
+
+    showWelcomeDialog() {
+        this.elements.welcomeDialog.classList.remove('hidden');
+    }
+
+    hideWelcomeDialog() {
+        this.elements.welcomeDialog.classList.add('hidden');
+        localStorage.setItem('weathrguessr-visited', 'true');
     }
 }
 
