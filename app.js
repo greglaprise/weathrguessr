@@ -282,7 +282,13 @@ class WeatherGuessr {
             isMetric: this.gameStats.isMetric // Preserve temperature unit preference
         };
         this.elements.tempToggle.textContent = this.gameStats.isMetric ? '°F' : '°C';
-        this.updateStatsDisplay();
+        
+        // Update display without incrementing round
+        this.elements.roundCount.textContent = this.gameStats.round;
+        this.elements.correctCount.textContent = this.gameStats.correct;
+        this.elements.accuracy.textContent = '0%';
+        this.elements.streak.textContent = this.gameStats.streak;
+        
         this.startNewRound();
     }
 
