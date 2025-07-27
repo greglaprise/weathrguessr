@@ -536,41 +536,167 @@ h1 {
 
 @media (max-width: 768px) {
     .container {
-        padding: 15px;
+        padding: 10px;
+        min-height: auto;
+    }
+    
+    header {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
     }
     
     h1 {
-        font-size: 2rem;
+        font-size: 1.8rem;
     }
     
     .game-container {
-        padding: 20px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .city-info {
+        margin-bottom: 20px;
+    }
+    
+    .city-info h2 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
+    
+    .city-image-container {
+        height: 180px;
+        max-width: 100%;
+    }
+    
+    .question h3 {
+        margin-bottom: 15px;
+        font-size: 1.2rem;
     }
     
     .choices {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .choice {
+        padding: 15px;
+        font-size: 1rem;
+    }
+    
+    .feedback {
+        padding: 15px;
+        margin: 15px 0;
+        font-size: 1.1rem;
     }
     
     .stats {
         grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 15px;
+    }
+    
+    .stat {
+        padding: 10px;
     }
     
     .game-actions {
         flex-direction: column;
         align-items: center;
+        gap: 10px;
     }
     
     .controls {
         flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .control-btn {
+        padding: 8px;
+        font-size: 1.1rem;
+        min-width: 45px;
+    }
+    
+    .welcome-content {
+        width: 95%;
+        max-height: 85vh;
+    }
+    
+    .welcome-header {
+        padding: 16px 16px 0;
+        margin-bottom: 16px;
+    }
+    
+    .welcome-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .welcome-body {
+        padding: 0 16px 16px;
+    }
+    
+    .welcome-body p {
+        margin-bottom: 15px;
+        font-size: 1rem;
+    }
+    
+    .welcome-features {
+        gap: 8px;
+        margin: 16px 0;
+    }
+    
+    .feature {
+        padding: 8px;
+    }
+    
+    .welcome-footer {
+        padding: 0 16px 16px;
     }
 }
 
 @media (max-width: 480px) {
-    .stats {
-        grid-template-columns: 1fr;
+    .container {
+        padding: 8px;
+    }
+    
+    header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+    }
+    
+    h1 {
+        font-size: 1.6rem;
+    }
+    
+    .game-container {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .city-info {
+        margin-bottom: 15px;
     }
     
     .city-image-container {
-        height: 200px;
+        height: 150px;
+    }
+    
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 12px;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+        min-width: 100px;
+    }
+    
+    .btn-share {
+        font-size: 0.8rem;
+        padding: 8px 16px;
     }
 }
