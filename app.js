@@ -6,7 +6,7 @@ class WeatherGuessr {
             round: 1,
             correct: 0,
             streak: 0,
-            isMetric: true
+            isMetric: false
         };
         this.gameState = 'waiting'; // waiting, answered, loading
         this.correctAnswer = null;
@@ -14,6 +14,7 @@ class WeatherGuessr {
         this.initializeElements();
         this.bindEvents();
         this.loadTheme();
+        this.initializeTemperatureToggle();
         this.startNewRound();
     }
 
@@ -247,17 +248,17 @@ class WeatherGuessr {
     }
 
     updateStatsDisplay() {
+        // Increment round for next round first
+        this.gameStats.round++;
+        
         this.elements.roundCount.textContent = this.gameStats.round;
         this.elements.correctCount.textContent = this.gameStats.correct;
         
-        const accuracy = this.gameStats.round > 0 ? 
-            Math.round((this.gameStats.correct / this.gameStats.round) * 100) : 0;
+        const accuracy = this.gameStats.correct > 0 ? 
+            Math.round((this.gameStats.correct / (this.gameStats.round - 1)) * 100) : 0;
         this.elements.accuracy.textContent = `${accuracy}%`;
         
         this.elements.streak.textContent = this.gameStats.streak;
-        
-        // Increment round for next round
-        this.gameStats.round++;
     }
 
     showFeedback(isCorrect) {
@@ -280,6 +281,7 @@ class WeatherGuessr {
             streak: 0,
             isMetric: this.gameStats.isMetric // Preserve temperature unit preference
         };
+        this.elements.tempToggle.textContent = this.gameStats.isMetric ? '°F' : '°C';
         this.updateStatsDisplay();
         this.startNewRound();
     }
@@ -300,9 +302,13 @@ class WeatherGuessr {
         this.elements.themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌓';
     }
 
+    initializeTemperatureToggle() {
+        this.elements.tempToggle.textContent = this.gameStats.isMetric ? '°F' : '°C';
+    }
+
     toggleTemperatureUnit() {
         this.gameStats.isMetric = !this.gameStats.isMetric;
-        this.elements.tempToggle.textContent = this.gameStats.isMetric ? '°C' : '°F';
+        this.elements.tempToggle.textContent = this.gameStats.isMetric ? '°F' : '°C';
         
         // Start a new game when temperature unit is toggled
         this.resetGame();
