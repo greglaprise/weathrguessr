@@ -44,7 +44,8 @@ class WeatherGuessr {
             roundCount: document.getElementById('round-count'),
             correctCount: document.getElementById('correct-count'),
             accuracy: document.getElementById('accuracy'),
-            streak: document.getElementById('streak')
+            streak: document.getElementById('streak'),
+            shareStreak: document.getElementById('share-streak')
         };
     }
 
@@ -54,6 +55,7 @@ class WeatherGuessr {
         this.elements.themeToggle.addEventListener('click', () => this.toggleTheme());
         this.elements.tempToggle.addEventListener('click', () => this.toggleTemperatureUnit());
         this.elements.apiStatus.addEventListener('click', () => this.checkAPIStatus());
+        this.elements.shareStreak.addEventListener('click', () => this.shareStreak());
         
         // Welcome dialog events
         this.elements.closeWelcome.addEventListener('click', () => this.hideWelcomeDialog());
@@ -422,6 +424,96 @@ class WeatherGuessr {
     hideWelcomeDialog() {
         this.elements.welcomeDialog.classList.add('hidden');
         localStorage.setItem('weathrguessr-visited', 'true');
+    }
+
+    async shareStreak() {
+        const completedRounds = this.gameStats.round - 1;
+        const accuracy = completedRounds > 0 ? 
+            Math.round((this.gameStats.correct / completedRounds) * 100) : 0;
+        
+        const shareText = `🌍 WeathrGuessr Results 🌍
+
+📊 Completed Rounds: ${completedRounds}
+✅ Correct Answers: ${this.gameStats.correct}
+🎯 Accuracy: ${accuracy}%
+🔥 Current Streak: ${this.gameStats.streak}
+
+Think you can beat my score? Play at https://weathrguessr.com`;
+
+        // Try modern clipboard API first
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(shareText);
+                this.showShareFeedback('✅ Results copied to clipboard!');
+                return;
+            } catch (error) {
+                console.error('Clipboard API failed:', error);
+            }
+        }
+
+        // Fallback: create text area for manual copy
+        this.showShareDialog(shareText);
+    }
+
+    showShareDialog(shareText) {
+        const dialog = document.createElement('div');
+        dialog.className = 'share-dialog';
+        dialog.innerHTML = `
+            <div class="share-dialog-content">
+                <div class="share-dialog-header">
+                    <h3>📊 Share Your Results</h3>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="share-dialog-body">
+                    <p>Copy the text below to share your results:</p>
+                    <textarea readonly class="share-text">${shareText}</textarea>
+                    <button class="btn btn-primary copy-btn">📋 Copy to Clipboard</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(dialog);
+        
+        // Auto-select the text
+        const textarea = dialog.querySelector('.share-text');
+        textarea.select();
+        textarea.setSelectionRange(0, 99999); // For mobile devices
+        
+        // Close dialog events
+        const closeBtn = dialog.querySelector('.close-btn');
+        closeBtn.addEventListener('click', () => document.body.removeChild(dialog));
+        
+        dialog.addEventListener('click', (e) => {
+            if (e.target === dialog) {
+                document.body.removeChild(dialog);
+            }
+        });
+        
+        // Copy button event
+        const copyBtn = dialog.querySelector('.copy-btn');
+        copyBtn.addEventListener('click', () => {
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                this.showShareFeedback('✅ Results copied to clipboard!');
+                document.body.removeChild(dialog);
+            } catch (error) {
+                this.showShareFeedback('❌ Please copy the text manually');
+            }
+        });
+    }
+
+    showShareFeedback(message) {
+        const feedbackElement = document.createElement('div');
+        feedbackElement.className = 'share-feedback';
+        feedbackElement.textContent = message;
+        document.body.appendChild(feedbackElement);
+
+        setTimeout(() => {
+            if (feedbackElement.parentNode) {
+                feedbackElement.parentNode.removeChild(feedbackElement);
+            }
+        }, 3000);
     }
 }
 
