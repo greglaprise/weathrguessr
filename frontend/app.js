@@ -23,6 +23,7 @@ class WeatherGuessr {
         this.elements = {
             cityName: document.getElementById('city-name'),
             cityImage: document.getElementById('city-image'),
+            cityImageContainer: document.getElementById('city-image-container'),
             choices: document.getElementById('choices'),
             feedback: document.getElementById('feedback'),
             nextRound: document.getElementById('next-round'),
@@ -67,6 +68,13 @@ class WeatherGuessr {
                 this.hideWelcomeDialog();
             }
         });
+
+        // Keyboard support for welcome dialog
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !this.elements.welcomeDialog.classList.contains('hidden')) {
+                this.hideWelcomeDialog();
+            }
+        });
     }
 
     async startNewRound() {
@@ -86,8 +94,14 @@ class WeatherGuessr {
                 this.getWeatherData(this.currentCity.lat, this.currentCity.lon)
             ]);
             
+            // Smooth image transition
+            this.elements.cityImage.style.opacity = '0';
             this.elements.cityImage.src = imageUrl;
             this.elements.cityImage.alt = `${this.currentCity.name} cityscape`;
+            this.elements.cityImage.onload = () => {
+                this.elements.cityImage.style.transition = 'opacity 0.4s ease';
+                this.elements.cityImage.style.opacity = '1';
+            };
             
             this.currentWeather = weatherData;
             this.generateChoices();
@@ -215,12 +229,31 @@ class WeatherGuessr {
         choices.forEach((choice, index) => {
             const choiceElement = document.createElement('div');
             choiceElement.className = 'choice';
+            choiceElement.setAttribute('role', 'button');
+            choiceElement.setAttribute('tabindex', '0');
             choiceElement.innerHTML = `
-                <div>High: ${this.formatTemperature(choice.high)}</div>
-                <div>Low: ${this.formatTemperature(choice.low)}</div>
+                <div>↑ ${this.formatTemperature(choice.high)}</div>
+                <div>↓ ${this.formatTemperature(choice.low)}</div>
             `;
             
+            // Staggered entrance animation
+            choiceElement.style.opacity = '0';
+            choiceElement.style.transform = 'translateY(12px)';
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    choiceElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    choiceElement.style.opacity = '1';
+                    choiceElement.style.transform = 'translateY(0)';
+                }, index * 60);
+            });
+
             choiceElement.addEventListener('click', () => this.selectChoice(index, choiceElement));
+            choiceElement.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.selectChoice(index, choiceElement);
+                }
+            });
             this.elements.choices.appendChild(choiceElement);
         });
     }
@@ -242,10 +275,15 @@ class WeatherGuessr {
         const allChoices = this.elements.choices.querySelectorAll('.choice');
         allChoices.forEach((choice, index) => {
             choice.style.pointerEvents = 'none';
+            // Reset inline transition styles from entrance animation
+            choice.style.transition = 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+
             if (index === this.correctAnswer) {
                 choice.classList.add('correct');
             } else if (index === selectedIndex) {
                 choice.classList.add('incorrect');
+            } else {
+                choice.style.opacity = '0.4';
             }
         });
         
@@ -270,14 +308,24 @@ class WeatherGuessr {
         // Increment round for next round first
         this.gameStats.round++;
         
-        this.elements.roundCount.textContent = this.gameStats.round;
-        this.elements.correctCount.textContent = this.gameStats.correct;
+        this.animateStat(this.elements.roundCount, this.gameStats.round);
+        this.animateStat(this.elements.correctCount, this.gameStats.correct);
         
         const accuracy = this.gameStats.correct > 0 ? 
             Math.round((this.gameStats.correct / (this.gameStats.round - 1)) * 100) : 0;
-        this.elements.accuracy.textContent = `${accuracy}%`;
+        this.animateStat(this.elements.accuracy, `${accuracy}%`);
         
-        this.elements.streak.textContent = this.gameStats.streak;
+        this.animateStat(this.elements.streak, this.gameStats.streak);
+    }
+
+    /** Mini pop animation when a stat value changes */
+    animateStat(el, value) {
+        el.style.transition = 'transform 0.15s ease';
+        el.style.transform = 'scale(1.25)';
+        el.textContent = value;
+        setTimeout(() => {
+            el.style.transform = 'scale(1)';
+        }, 150);
     }
 
     showFeedback(isCorrect) {
@@ -287,7 +335,7 @@ class WeatherGuessr {
             this.elements.feedback.textContent = '🎉 Correct! Great guess!';
         } else {
             const correctTemp = this.formatTemperature(this.currentWeather.high) + ' / ' + this.formatTemperature(this.currentWeather.low);
-            this.elements.feedback.textContent = `❌ Incorrect. The correct answer was ${correctTemp}`;
+            this.elements.feedback.textContent = `❌ Incorrect — the answer was ${correctTemp}`;
         }
         
         this.elements.feedback.classList.remove('hidden');
@@ -322,7 +370,7 @@ class WeatherGuessr {
     }
 
     loadTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
+        const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
         this.elements.themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌓';
     }
@@ -358,7 +406,7 @@ class WeatherGuessr {
     async checkAPIStatus() {
         const statusDiv = document.createElement('div');
         statusDiv.className = 'api-status';
-        statusDiv.innerHTML = '<h4>Checking API Status...</h4>';
+        statusDiv.innerHTML = '<h4>Checking API Status…</h4>';
         document.body.appendChild(statusDiv);
         
         try {
@@ -388,18 +436,28 @@ class WeatherGuessr {
         
         setTimeout(() => {
             if (statusDiv.parentNode) {
-                statusDiv.parentNode.removeChild(statusDiv);
+                statusDiv.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                statusDiv.style.opacity = '0';
+                statusDiv.style.transform = 'translateX(20px)';
+                setTimeout(() => {
+                    if (statusDiv.parentNode) {
+                        statusDiv.parentNode.removeChild(statusDiv);
+                    }
+                }, 300);
             }
-        }, 5000);
+        }, 4000);
     }
 
     showLoading(show) {
         if (show) {
             this.elements.loading.classList.remove('hidden');
-            this.elements.gameContainer.style.opacity = '0.5';
+            this.elements.gameContainer.style.transition = 'opacity 0.3s ease';
+            this.elements.gameContainer.style.opacity = '0.35';
+            this.elements.gameContainer.style.pointerEvents = 'none';
         } else {
             this.elements.loading.classList.add('hidden');
             this.elements.gameContainer.style.opacity = '1';
+            this.elements.gameContainer.style.pointerEvents = '';
         }
     }
 
@@ -462,7 +520,7 @@ Think you can beat my score? Play at https://weathrguessr.com`;
             <div class="share-dialog-content">
                 <div class="share-dialog-header">
                     <h3>📊 Share Your Results</h3>
-                    <button class="close-btn">&times;</button>
+                    <button class="close-btn" aria-label="Close share dialog">&times;</button>
                 </div>
                 <div class="share-dialog-body">
                     <p>Copy the text below to share your results:</p>
@@ -488,6 +546,13 @@ Think you can beat my score? Play at https://weathrguessr.com`;
                 document.body.removeChild(dialog);
             }
         });
+
+        document.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape' && dialog.parentNode) {
+                document.body.removeChild(dialog);
+                document.removeEventListener('keydown', escHandler);
+            }
+        });
         
         // Copy button event
         const copyBtn = dialog.querySelector('.copy-btn');
@@ -511,9 +576,16 @@ Think you can beat my score? Play at https://weathrguessr.com`;
 
         setTimeout(() => {
             if (feedbackElement.parentNode) {
-                feedbackElement.parentNode.removeChild(feedbackElement);
+                feedbackElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                feedbackElement.style.opacity = '0';
+                feedbackElement.style.transform = 'translateX(20px)';
+                setTimeout(() => {
+                    if (feedbackElement.parentNode) {
+                        feedbackElement.parentNode.removeChild(feedbackElement);
+                    }
+                }, 300);
             }
-        }, 3000);
+        }, 2500);
     }
 }
 
